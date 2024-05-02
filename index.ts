@@ -55,6 +55,7 @@ export default async function (options: PinoCloudwatchTransportOptions) {
   const client = new CloudWatchLogsClient({ region: awsRegion, credentials });
 
   const logStreamMutex = new Mutex();
+  let isFirstEntry = true
   let _logStreamName: string
   let rotationIntervalId: NodeJS.Timeout | null = null
 
@@ -74,7 +75,8 @@ export default async function (options: PinoCloudwatchTransportOptions) {
   const rotateLogStreamName = async () => {
     await logStreamMutex.runExclusive(async () => {
       _logStreamName = nextLogStreamName()
-      await createLogStream(logGroupName, _logStreamName);
+      // await createLogStream(logGroupName, _logStreamName);
+      isFirstEntry = true
     })
   }
 
@@ -86,12 +88,25 @@ export default async function (options: PinoCloudwatchTransportOptions) {
   }
 
   const getLogStreamName = async () => {
-    if (!_logStreamName) {
-      return _logStreamName;
-    } else {
-      await logStreamMutex.waitForUnlock()
-      return _logStreamName;
+    let result: string = _logStreamName
+
+    if (isFirstEntry) {
+      if (logStreamNameRotationInterval) {
+        await rotateLogStreamName()
+        result = _logStreamName;
+        if (logStreamNameRotationInterval) {
+          rotationIntervalId = setInterval(rotate, logStreamNameRotationInterval);
+        }
+        // } else {
+        await createLogStream(logGroupName, result);
+        // }
+      } else {
+        result = logStreamName;
+      }
+      await createLogStream(logGroupName, result);
     }
+
+    return result
   }
 
   const { addLog, getLogs, wipeLogs, addErrorLog, orderLogs } = (function() {
@@ -142,7 +157,7 @@ export default async function (options: PinoCloudwatchTransportOptions) {
       }
       if(!reachedBufferSizeLimit(log)) {
         bufferedLogs.push(log);
-        return reachedNumberOfLogsLimit() || shouldDoAPeriodicFlush();
+        return isFirstEntry || reachedNumberOfLogsLimit() || shouldDoAPeriodicFlush();
       } else {
         setImmediate(() => {
           addLog(log);
@@ -223,6 +238,7 @@ export default async function (options: PinoCloudwatchTransportOptions) {
       orderLogs();
       const logStreamName = await getLogStreamName();
       await putEventLogs(logGroupName, logStreamName, getLogs());
+      isFirstEntry = false;
     } catch (e: any) {
       await addErrorLog({ message: 'pino-cloudwatch-transport flushing error', error: e.message });
     } finally {
@@ -235,15 +251,6 @@ export default async function (options: PinoCloudwatchTransportOptions) {
   try {
     console.log(`creating log group ${logGroupName}`)
     await createLogGroup(logGroupName);
-
-    if (!logStreamNameRotationInterval) {
-      await createLogStream(logGroupName, logStreamName);
-    } else {
-      await rotateLogStreamName()
-      if (logStreamNameRotationInterval) {
-        rotationIntervalId = setInterval(rotate, logStreamNameRotationInterval);
-      }
-    }
     // await createLogStream(logGroupName, logStreamNamePrefix);
   } catch (e: any) {
     await addErrorLog({ message: 'pino-cloudwatch-transport initialization error', error: e.message });
