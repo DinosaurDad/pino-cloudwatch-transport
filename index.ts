@@ -101,7 +101,6 @@ export default async function (options: PinoCloudwatchTransportOptions) {
       } else {
         result = logStreamName;
       }
-      await createLogStream(logGroupName, result);
     }
 
     return result
@@ -216,6 +215,7 @@ export default async function (options: PinoCloudwatchTransportOptions) {
 
   async function putEventLogs(logGroupName: string, logStreamName: string , logEvents: Log[]) {
     if(logEvents.length === 0) return;
+
     const params = new PutLogEventsCommand({
       logEvents,
       logGroupName,
