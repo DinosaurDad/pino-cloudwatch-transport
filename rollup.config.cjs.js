@@ -7,9 +7,9 @@ import { visualizer } from "rollup-plugin-visualizer"
 export default {
   input: "index.ts",
   output: {
-    dir: "dist",
-    // file: "index.js",
-    format: "es",
+    // dir: "dist-cjs",
+    file: "dist/index.cjs",
+    format: "cjs",
     generatedCode: "es2015",
   },
 
