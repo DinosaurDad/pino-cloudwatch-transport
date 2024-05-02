@@ -14,12 +14,18 @@ importers:
       async-mutex:
         specifier: ^0.5.0
         version: 0.5.0
+      p-debounce:
+        specifier: ^4.0.0
+        version: 4.0.0
       p-throttle:
         specifier: ^6.1.0
         version: 6.1.0
       pino-abstract-transport:
         specifier: ^1.2.0
         version: 1.2.0
+      throttleit:
+        specifier: ^2.0.0
+        version: 2.0.0
     devDependencies:
       '@rollup/plugin-commonjs':
         specifier: ^25.0.7
@@ -1036,6 +1042,10 @@ packages:
     resolution: {integrity: sha512-7x81NCL719oNbsq/3mh+hVrAWmFuEYUqrq/Iw3kUzH8ReypT9QQ0BLoJS7/G9k6N81XjW4qHWtjWwe/9eLy1EQ==}
     engines: {node: '>=12'}
 
+  p-debounce@4.0.0:
+    resolution: {integrity: sha512-4Ispi9I9qYGO4lueiLDhe4q4iK5ERK8reLsuzH6BPaXn53EGaua8H66PXIFGrW897hwjXp+pVLrm/DLxN0RF0A==}
+    engines: {node: '>=12'}
+
   p-limit@5.0.0:
     resolution: {integrity: sha512-/Eaoq+QyLSiXQ4lyYV23f14mZRQcXnxfHrN0vCai+ak9G0pp9iEQukIIZq5NccEvwRB8PUnZT0KsOoDCINS1qQ==}
     engines: {node: '>=18'}
@@ -1225,6 +1235,10 @@ packages:
 
   thread-stream@2.7.0:
     resolution: {integrity: sha512-qQiRWsU/wvNolI6tbbCKd9iKaTnCXsTwVxhhKM6nctPdujTyztjlbUkUTUymidWcMnZ5pWR0ej4a0tjsW021vw==}
+
+  throttleit@2.0.0:
+    resolution: {integrity: sha512-9VImOCJfOMzgBNJIa8ifGnJbAY3XGkl+mGV/+N69+L07QXrg6B6FqPI+2MCqdO5Ojega5BsA94zKHh2rHsQW9Q==}
+    engines: {node: '>=18'}
 
   tinybench@2.8.0:
     resolution: {integrity: sha512-1/eK7zUnIklz4JUUlL+658n58XO2hHLQfSk1Zf2LKieUjxidN16eKFEoDEfjHc3ohofSSqK3X5yO6VGb6iW8Lw==}
@@ -2611,6 +2625,8 @@ snapshots:
       is-docker: 2.2.1
       is-wsl: 2.2.0
 
+  p-debounce@4.0.0: {}
+
   p-limit@5.0.0:
     dependencies:
       yocto-queue: 1.0.0
@@ -2804,6 +2820,8 @@ snapshots:
   thread-stream@2.7.0:
     dependencies:
       real-require: 0.2.0
+
+  throttleit@2.0.0: {}
 
   tinybench@2.8.0: {}
 

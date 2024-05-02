@@ -83,16 +83,34 @@ describe('Logging', async (t) => {
     test('Should be able to log a single line', async (t) => {
         const log = pino(instance);
 
-        log.info("1")
+        log.info("1-1")
+        await sleep(1000)
+        log.info("1-2")
+        await sleep(500)
+        log.info("1-3")
+        await sleep(1000)
+        log.info("1-4")
+        await sleep(500)
+        log.info("1-5")
+        await sleep(1000)
+        log.info("1-6")
+        await sleep(500)
+        log.info("1-7")
+        await sleep(1000)
+        log.info("1-8")
 
         // const before = Date.now();
         await setImmediate();
 
-        await sleep(LOG_STREAM_NAME_ROTATION_INTERVAL + 10000)
+        await sleep(5000)
+
+        // await sleep(LOG_STREAM_NAME_ROTATION_INTERVAL + 10000)
 
         log.info("2")
 
         await setImmediate();
+
+        await sleep(2000)
 
         instance.end();
 

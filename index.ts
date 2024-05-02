@@ -5,7 +5,7 @@ import {
   PutLogEventsCommand,
   ResourceAlreadyExistsException, ResourceNotFoundException
 } from '@aws-sdk/client-cloudwatch-logs';
-import pThrottle from 'p-throttle';
+import {debounce} from "./throttle.js"
 import build from 'pino-abstract-transport';
 import {Mutex} from "async-mutex"
 
@@ -55,6 +55,7 @@ export default async function (options: PinoCloudwatchTransportOptions) {
   const client = new CloudWatchLogsClient({ region: awsRegion, credentials });
 
   const logStreamMutex = new Mutex();
+  const logEntryMutex = new Mutex();
   let isFirstEntry = true
   let _logStreamName: string
   let rotationIntervalId: NodeJS.Timeout | null = null
@@ -156,7 +157,9 @@ export default async function (options: PinoCloudwatchTransportOptions) {
         return false;
       }
       if(!reachedBufferSizeLimit(log)) {
-        bufferedLogs.push(log);
+        logEntryMutex.runExclusive(() => {
+          bufferedLogs.push(log);
+        }).catch(console.error)
         return isFirstEntry || reachedNumberOfLogsLimit() || shouldDoAPeriodicFlush();
       } else {
         setImmediate(() => {
@@ -228,23 +231,42 @@ export default async function (options: PinoCloudwatchTransportOptions) {
     }
   }
 
-  const throttle = pThrottle({
-    interval: 1000,
-    limit: 1
-  });
+  // const throttle = pThrottle({
+  //   interval: 1000,
+  //   limit: 5
+  // });
 
-  const flush = throttle(async function() {
-    try {
-      orderLogs();
-      const logStreamName = await getLogStreamName();
-      await putEventLogs(logGroupName, logStreamName, getLogs());
-      isFirstEntry = false;
-    } catch (e: any) {
-      await addErrorLog({ message: 'pino-cloudwatch-transport flushing error', error: e.message });
-    } finally {
-      wipeLogs();
+  const flushHandler = () => {
+    logEntryMutex.runExclusive(async () => {
+      try {
+        const logStreamName = await getLogStreamName();
+        await putEventLogs(logGroupName, logStreamName, getLogs().sort((a, b) => a.timestamp - b.timestamp));
+        isFirstEntry = false;
+      } catch (error: any) {
+        console.error(error);
+        await addErrorLog({ message: 'pino-cloudwatch-transport flushing error', error: error.message });
+      } finally {
+        wipeLogs();
+      }
+    }).catch((error: Error) => {
+      console.error(error);
+    })
+  }
+
+  const debouncedFlush = debounce(flushHandler, 1000, {maxWait: 5000})
+
+  const flush = async (force?: boolean) => {
+    if (force) {
+      console.log('force flush')
+      flushHandler()
+    } else {
+      // console.log('flushing')
+      debouncedFlush()
     }
-  });
+    // console.log('flushing', force
+    // await throttledFlush();
+    // throttleitFlush();
+  };
 
   // Transport initialization
 
@@ -290,7 +312,7 @@ export default async function (options: PinoCloudwatchTransportOptions) {
         clearInterval(rotationIntervalId);
         rotationIntervalId = null
       }
-      await flush();
+      await flush(true);
       client.destroy();
     }
   })
