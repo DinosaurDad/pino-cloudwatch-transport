@@ -242,6 +242,7 @@ export default async function (options: PinoCloudwatchTransportOptions) {
   // Transport initialization
 
   try {
+    console.log(`creating log group ${logGroupName}`)
     await createLogGroup(logGroupName);
     // await createLogStream(logGroupName, logStreamNamePrefix);
   } catch (e: any) {

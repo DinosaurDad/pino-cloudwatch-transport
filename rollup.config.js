@@ -15,7 +15,7 @@ export default {
 
   external: [
     "@aws-sdk/client-cloudwatch-logs",
-    "pino-abstract-transport"
+    // "pino-abstract-transport"
   ],
   plugins: [
     typescript(),
