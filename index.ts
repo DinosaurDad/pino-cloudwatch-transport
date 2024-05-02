@@ -98,9 +98,6 @@ export default async function (options: PinoCloudwatchTransportOptions) {
         if (logStreamNameRotationInterval) {
           rotationIntervalId = setInterval(rotate, logStreamNameRotationInterval);
         }
-        // } else {
-        await createLogStream(logGroupName, result);
-        // }
       } else {
         result = logStreamName;
       }
@@ -227,7 +224,16 @@ export default async function (options: PinoCloudwatchTransportOptions) {
     try {
       const output = await client.send(params);
     } catch (e) {
-      console.error(e);
+      if (isResourceNotFoundException(e)) {
+        try {
+          await createLogStream(logGroupName, logStreamName);
+          const output = await client.send(params);
+        } catch (e) {
+          console.error(e);
+        }
+      } else {
+        console.error(e);
+      }
     }
   }
 
