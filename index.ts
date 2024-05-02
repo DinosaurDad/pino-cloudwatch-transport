@@ -85,15 +85,6 @@ export default async function (options: PinoCloudwatchTransportOptions) {
     await rotateLogStreamName()
   }
 
-  if (!logStreamNameRotationInterval) {
-    await createLogStream(logGroupName, logStreamName);
-  } else {
-    await rotateLogStreamName()
-    if (logStreamNameRotationInterval) {
-      rotationIntervalId = setInterval(rotate, logStreamNameRotationInterval);
-    }
-  }
-
   const getLogStreamName = async () => {
     if (!_logStreamName) {
       return _logStreamName;
@@ -244,6 +235,15 @@ export default async function (options: PinoCloudwatchTransportOptions) {
   try {
     console.log(`creating log group ${logGroupName}`)
     await createLogGroup(logGroupName);
+
+    if (!logStreamNameRotationInterval) {
+      await createLogStream(logGroupName, logStreamName);
+    } else {
+      await rotateLogStreamName()
+      if (logStreamNameRotationInterval) {
+        rotationIntervalId = setInterval(rotate, logStreamNameRotationInterval);
+      }
+    }
     // await createLogStream(logGroupName, logStreamNamePrefix);
   } catch (e: any) {
     await addErrorLog({ message: 'pino-cloudwatch-transport initialization error', error: e.message });
